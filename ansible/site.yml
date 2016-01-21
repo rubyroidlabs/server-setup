@@ -1,5 +1,5 @@
 ---
-- hosts: ruby_on_rails_setup
+- hosts: all
   sudo: yes
   remote_user: root
   tasks:
@@ -27,6 +27,26 @@
         - libpq-dev
         - nodejs
 
+    - name: create user
+      user:
+        name: deployer
+        createhome: yes
+        shell: /bin/bash
+        group: root
+        generate_ssh_key: yes
+
+    - name: copy my ssh key
+      authorized_key:
+        key: "{{ lookup('file', '/Users/vorob/.ssh/github_id.pub') }}"
+        user: "deployer"
+        state: present
+
+- name: Configure servers with ruby support
+  hosts: all
+  vars:
+    rvm1_install_flags: '--auto-dotfiles --user-install'
+  roles:
+    - { role: rvm_io.rvm1-ruby, tags: ruby, sudo: True }
 # - hosts: all
 #   gather_facts: no
 #   roles:

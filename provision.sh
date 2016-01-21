@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ansible-playbook $@ -s --ask-sudo-pass -u root ./ansible/site.yml
+ansible-playbook $@ -s -u root ./ansible/site.yml
