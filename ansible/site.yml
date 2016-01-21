@@ -26,6 +26,7 @@
         - postgresql-9.3
         - libpq-dev
         - nodejs
+        - htop
 
     - name: create user
       user:
@@ -41,12 +42,23 @@
         user: "deployer"
         state: present
 
-- name: Configure servers with ruby support
+    - name: create a user for postgres
+      postgresql_user: name=deployer password=qweqweqwe role_attr_flags=CREATEDB
+
+- name: Install ruby with rvm
   hosts: all
   vars:
     rvm1_install_flags: '--auto-dotfiles --user-install'
   roles:
     - { role: rvm_io.rvm1-ruby, tags: ruby, sudo: True }
+
+- name: Install redis
+  hosts: all
+  vars:
+    redis_user: deployer
+  roles:
+    - DavidWittman.redis
+
 # - hosts: all
 #   gather_facts: no
 #   roles:
