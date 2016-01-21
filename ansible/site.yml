@@ -1,0 +1,59 @@
+---
+- hosts: ruby_on_rails_setup
+  sudo: yes
+  remote_user: root
+  tasks:
+    - name: install required packages
+      apt:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      with_items:
+        - build-essential
+        - git-core
+        - curl
+        - sqlite3
+        - libsqlite3-dev
+        - libxml2-dev
+        - libxslt1-dev
+        - libreadline-dev
+        - libyaml-dev
+        - libcurl4-openssl-dev
+        - libncurses5-dev
+        - libgdbm-dev
+        - libffi-dev
+        - runit
+        - postgresql-9.3
+        - libpq-dev
+        - nodejs
+
+# - hosts: all
+#   gather_facts: no
+#   roles:
+#     - { role: apt_proxy, when: use_apt_proxy }
+#   tasks:
+#     - name: Update apt cache
+#       apt:
+#         update_cache: yes
+#         cache_valid_time: 3600
+
+# - hosts: postgresql
+#   roles:
+#     - postgresql
+
+# - hosts: application
+#   handlers:
+#     - include: roles/sidekiq/handlers/main.yml
+#   roles:
+#     - base
+#     - { role: ruby, tags: ruby }
+#     - vim
+#     - webserver
+
+# - hosts: sidekiq
+#   handlers:
+#     - include: roles/unicorn/handlers/main.yml
+#   roles:
+#     - base
+#     - ruby
+#     - { role: sidekiq, tags: sidekiq }
