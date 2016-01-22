@@ -1,0 +1,7 @@
+---
+app_name: 'findme'
+key_path: '/Users/vorob/.ssh/id_rsa.pub'
+
+db_password: 'qweqweqwe'
+
+server_name: '46.101.249.98'

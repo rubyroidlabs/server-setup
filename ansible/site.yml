@@ -28,25 +28,29 @@
         - nodejs
         - htop
         - python-psycopg2
+        - memcached
 
     - name: Create user
       user:
         name: deployer
         createhome: yes
         shell: /bin/bash
-        groups: root
+        group: root
         generate_ssh_key: yes
 
     - name: Copy my ssh key
       authorized_key:
-        key: "{{ lookup('file', '/Users/vorob/.ssh/github_id.pub') }}"
+        key: "{{ lookup('file', key_path) }}"
         user: "deployer"
         state: present
 
     - name: Create user for postgres
       sudo: yes
       sudo_user: postgres
-      postgresql_user: name=deployer password=qweqweqwe role_attr_flags=CREATEDB
+      postgresql_user:
+        name: "{{ app_name }}"
+        password: "{{ db_password }}"
+        role_attr_flags: CREATEDB
 
 - name: Install ruby with rvm
   hosts: all
@@ -57,12 +61,44 @@
 
 - name: Install redis
   hosts: all
-  vars:
-    redis_user: deployer
   roles:
     - DavidWittman.redis
 
 - name: Install nginx
   hosts: all
   roles:
-    - jdauphant.nginx
+    - role: jdauphant.nginx
+      nginx_configs:
+        upstream:
+          - "upstream {{ app_name }}
+              { server unix:/tmp/unicorn_{{ app_name }}.sock fail_timeout=0;
+            }"
+      nginx_sites:
+        #change it to your app name
+        app_name:
+          - "client_max_body_size 4G"
+          - "server_name {{ server_name }}"
+          - "keepalive_timeout 5"
+          - "root /var/www/{{ app_name }}/current/public"
+          - "location ~ ^/(assets)/  {
+              root /var/www/{{ app_name }}/current/public;
+              index index.html;
+              gzip_static on;
+              expires max; add_header Cache-Control public;
+            }"
+          - "location / {
+              if (-f $document_root/system/maintenance.html) {
+                return 503;
+              }
+              try_files $uri @app;
+            }"
+          - "error_page 503 @maintenance"
+          - "location @maintenance {
+              rewrite ^(.*)$ /system/maintenance.html break;
+             }"
+          - "location @app {
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header Host $http_host;
+              proxy_redirect off;
+              proxy_pass http://{{ app_name }};
+            }"
