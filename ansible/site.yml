@@ -3,7 +3,7 @@
   sudo: yes
   remote_user: root
   tasks:
-    - name: install required packages
+    - name: Install required packages
       apt:
         name: "{{ item }}"
         state: present
@@ -23,26 +23,29 @@
         - libgdbm-dev
         - libffi-dev
         - runit
-        - postgresql-9.3
+        - postgresql
         - libpq-dev
         - nodejs
         - htop
+        - python-psycopg2
 
-    - name: create user
+    - name: Create user
       user:
         name: deployer
         createhome: yes
         shell: /bin/bash
-        group: root
+        groups: root
         generate_ssh_key: yes
 
-    - name: copy my ssh key
+    - name: Copy my ssh key
       authorized_key:
         key: "{{ lookup('file', '/Users/vorob/.ssh/github_id.pub') }}"
         user: "deployer"
         state: present
 
-    - name: create a user for postgres
+    - name: Create user for postgres
+      sudo: yes
+      sudo_user: postgres
       postgresql_user: name=deployer password=qweqweqwe role_attr_flags=CREATEDB
 
 - name: Install ruby with rvm
@@ -59,33 +62,7 @@
   roles:
     - DavidWittman.redis
 
-# - hosts: all
-#   gather_facts: no
-#   roles:
-#     - { role: apt_proxy, when: use_apt_proxy }
-#   tasks:
-#     - name: Update apt cache
-#       apt:
-#         update_cache: yes
-#         cache_valid_time: 3600
-
-# - hosts: postgresql
-#   roles:
-#     - postgresql
-
-# - hosts: application
-#   handlers:
-#     - include: roles/sidekiq/handlers/main.yml
-#   roles:
-#     - base
-#     - { role: ruby, tags: ruby }
-#     - vim
-#     - webserver
-
-# - hosts: sidekiq
-#   handlers:
-#     - include: roles/unicorn/handlers/main.yml
-#   roles:
-#     - base
-#     - ruby
-#     - { role: sidekiq, tags: sidekiq }
+- name: Install nginx
+  hosts: all
+  roles:
+    - jdauphant.nginx
