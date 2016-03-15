@@ -1,7 +1,1 @@
-46.101.249.98 ansible_ssh_port=22
-
-[all]
-46.101.249.98
-
-[ruby_on_rails_setup]
-46.101.249.98
+45.55.51.62 ansible_ssh_port=22

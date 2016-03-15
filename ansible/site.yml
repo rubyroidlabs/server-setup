@@ -1,7 +1,6 @@
 ---
 - hosts: all
-  sudo: yes
-  remote_user: root
+  remote_user: "{{ remote_user_which_runs_script }}"
   tasks:
     - name: Install required packages
       apt:
@@ -9,6 +8,7 @@
         state: present
         update_cache: yes
       with_items:
+        - python
         - build-essential
         - git-core
         - curl
@@ -32,32 +32,47 @@
 
     - name: Create user
       user:
-        name: deployer
+        name: "{{ deployer_user }}"
         createhome: yes
         shell: /bin/bash
-        group: root
+        group: "{{ remote_sudo_group }}"
         generate_ssh_key: yes
+
+    - name: Create sudoers.d directory
+      file:
+        path: /etc/sudoers.d
+        owner: root
+        group: root
+        mode: 0755
+        state: directory
+
+    - name: Set includedir in sudoers
+      lineinfile:
+        dest: /etc/sudoers
+        line: "#includedir /etc/sudoers.d"
+        state: present
+        validate: "/usr/sbin/visudo -cf %s"
+
+    - name: Add user to sudoers
+      lineinfile:
+        dest: /etc/sudoers.d/deployer
+        line: "{{deployer_user}} ALL=(ALL) NOPASSWD: ALL"
+        create: true
+        validate: "/usr/sbin/visudo -cf %s"
 
     - name: Copy my ssh key
       authorized_key:
         key: "{{ lookup('file', key_path) }}"
-        user: "deployer"
+        user: "{{ deployer_user }}"
         state: present
 
     - name: Create user for postgres
-      sudo: yes
-      sudo_user: postgres
+      become: yes
+      become_user: postgres
       postgresql_user:
         name: "{{ app_name }}"
         password: "{{ db_password }}"
         role_attr_flags: CREATEDB
-
-- name: Install ruby with rvm
-  hosts: all
-  vars:
-    rvm1_install_flags: '--auto-dotfiles --user-install'
-  roles:
-    - { role: rvm_io.rvm1-ruby, tags: ruby, sudo: True }
 
 - name: Install redis
   hosts: all
@@ -74,8 +89,7 @@
               { server unix:/tmp/unicorn_{{ app_name }}.sock fail_timeout=0;
             }"
       nginx_sites:
-        #change it to your app name
-        app_name:
+        application:
           - "client_max_body_size 4G"
           - "server_name {{ server_name }}"
           - "keepalive_timeout 5"
@@ -102,3 +116,18 @@
               proxy_redirect off;
               proxy_pass http://{{ app_name }};
             }"
+
+- name: Install ruby with rvm
+  hosts: all
+  become: true
+  become_user: "{{ deployer_user }}"
+  vars:
+    rvm1_install_flags: '--auto-dotfiles --user-install'
+    rvm1_install_path: '/home/{{ deployer_user }}/.rvm'
+    rvm1_user: "{{ deployer_user }}"
+    rvm1_rubies: ["{{ ruby_version }}"]
+  roles:
+    - role: rvm_io.rvm1-ruby
+      tags: ruby
+      become: true
+      become_user: "{{ deployer_user }}"
