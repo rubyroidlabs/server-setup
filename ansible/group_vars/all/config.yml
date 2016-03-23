@@ -1,11 +1,11 @@
 ---
-app_name: 'radium-crm'
+app_name: 'mobile-ads'
 key_path: '~/.ssh/id_rsa.pub'
 
-db_password: 'abdcdr1b2afe4189bc0dd8fab0bfc36025'
+db_password: 'abadc3dr1b2afe41289bc0dd8fab0b333fc36025'
 
-server_name: '45.55.51.62'
+server_name: '46.101.107.216'
 remote_user_which_runs_script: 'root'
 remote_sudo_group: 'root'
 deployer_user: 'deployer'
-ruby_version: 'ruby-2.2.4'
+ruby_version: 'ruby-2.3.0'
