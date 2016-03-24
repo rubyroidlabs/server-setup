@@ -139,7 +139,7 @@
   become_user: "{{ deployer_user }}"
   tasks:
     - name: Use rvm gemset or create
-      shell: "rvm gemset use {{app_name}} --create"
+      shell: "~/.rvm/bin/rvm gemset create {{app_name}}"
 
 - name: Install bundler
   hosts: all
@@ -147,12 +147,10 @@
   become_user: "{{ deployer_user }}"
   tasks:
     - name: Install bundler
-      shell: "gem install bundler"
+      shell: "~/.rvm/bin/rvm {{ruby_version}}@{{app_name}} do gem install bundler"
 
 - name: Chown /var/www folder to deployer_user
   hosts: all
-  become: true
-  become_user: "{{ deployer_user }}"
   tasks:
     - name: Chown www folder
-      shell: "sudo chown {{ deployer_user }}:{{ remote_sudo_group }} /var/www"
+      shell: "chown {{ deployer_user }}:{{ remote_sudo_group }} /var/www"
